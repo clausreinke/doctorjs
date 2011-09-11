@@ -86,7 +86,10 @@ if (opts.warning) {
     log.level = log.levels[level];
 }
 
-function idFor(st) {
+function idFor(p,st) {
+  if (st.ino===0)     // TODO: better useability check
+    return 'path:'+p; // st.ino always zero on windows
+  else
     return st.dev + "," + st.ino;
 }
 
@@ -94,7 +97,7 @@ var librootIds = {};
 if ('libroot' in opts) {
     opts.libroot.forEach(function(libroot) {
         var st = fs.statSync(libroot);
-        librootIds[idFor(st)] = true;
+        librootIds[idFor(libroot,st)] = true;
     });
 }
 
@@ -154,11 +157,11 @@ function getModuleInfo(fullPath) {
             libPath = p;
         }
 
-        if (librootIds.hasOwnProperty(idFor(st))) {
+        if (librootIds.hasOwnProperty(idFor(p,st))) {
             return commonJS(fullPath.substring(p.length + 1));
         }
 
-        if (p.lastIndexOf("/") < 1) {
+        if (p===".") { // (p.lastIndexOf("/") < 1) {
             // For some reason path.dirname() returns "." once it's done.
             break;
         }
@@ -170,9 +173,9 @@ function getModuleInfo(fullPath) {
 }
 
 var idsSeen = {};
-function processPath(p) {
+function processPath(p,named) {
     var st = fs.statSync(p);
-    var id = idFor(st);
+    var id = idFor(p,st);
     if (id in idsSeen) {
         return; // avoid loops
     }
@@ -181,9 +184,9 @@ function processPath(p) {
     var ext = path.extname(p).toLowerCase();
     if (st.isDirectory()) {
         fs.readdirSync(p).forEach(function(filename) {
-            processPath(path.join(p, filename));
+            processPath(path.join(p, filename),false);
         });
-    } else if (ext === ".js" || ext === ".jsm") {
+    } else if (ext === ".js" || ext === ".jsm" || named) {
         try {
             var data = fs.readFileSync(p, "utf8");
             tags.scan(data, p, getModuleInfo(p));
@@ -204,7 +207,7 @@ else
   for (var i = 0; i < pathCount; i++) {
     //processPath(argv[i + 2], false, "", "");
     //dimvar: processPath seems to use its first arg only
-    processPath(argv[i + 2]);
+    processPath(argv[i + 2],true);
   }
 
 function processMany() {
