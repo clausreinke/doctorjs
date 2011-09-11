@@ -56,6 +56,7 @@ function usage() {
     sys.puts("    -j, --jsonp function  use JSONP with a function name");
     sys.puts("    -o, --output file     synonym for -f");
     sys.puts("        --oneprog         combine all inputs into one program");
+    sys.puts("        --locals          add scoped tags for local variables");
     sys.puts("    -L, --libroot dir     add a CommonJS module root (like " +
              "require.paths)")
     sys.puts("    -W, --warning level   set log level (debug/info/warn/" +
@@ -65,8 +66,8 @@ function usage() {
 
 var opts;
 try {
-    opts = getopt("help|h", "jsonp|j=s", "libroot|L=s@", "oneprog", "output|o|f=s",
-                  "sort|=s", "warning|W=s");
+    opts = getopt("help|h", "jsonp|j=s", "libroot|L=s@", "oneprog", "locals",
+                  "output|o|f=s", "sort|=s", "warning|W=s");
 } catch (e) {
     sys.puts(e);
     usage();
@@ -100,6 +101,8 @@ if ('libroot' in opts) {
         librootIds[idFor(libroot,st)] = true;
     });
 }
+
+var options = opts.locals ? {params: true, localVars: true} : {};
 
 var tags = new Tags();
 
@@ -172,6 +175,11 @@ function getModuleInfo(fullPath) {
     return { commonJS: false };
 }
 
+function addOptions(options,addIns) {
+  for (var a in addIns) options[a] = addIns[a];
+  return options;
+}
+
 var idsSeen = {};
 function processPath(p,named) {
     var st = fs.statSync(p);
@@ -189,7 +197,7 @@ function processPath(p,named) {
     } else if (ext === ".js" || ext === ".jsm" || named) {
         try {
             var data = fs.readFileSync(p, "utf8");
-            tags.scan(data, p, getModuleInfo(p));
+            tags.scan(data, p, addOptions(getModuleInfo(p),options));
         } catch (e) {
             if ('lineNumber' in e) {
                 sys.puts("error:" + p + ":" + e.lineNumber + ": " + e);
@@ -230,7 +238,7 @@ function processMany() {
 
   for (data = "", i = pcm1; i >= 0; --i) data = fileinfo[i].data + data;
   // the decision to pass argv[2] here is arbitrary
-  tags.scan(data, argv[2], getModuleInfo(argv[2]));
+  tags.scan(data, argv[2], addOptions(getModuleInfo(argv[2]),options));
 
   function getFileInfo(ln) {
     var i = 0, f, s = 0, e = pcm1, floor = Math.floor;
