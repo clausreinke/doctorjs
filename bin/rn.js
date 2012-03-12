@@ -44,7 +44,7 @@ var libdir = path.join(cwd, "..", "lib");
  
 require.paths.unshift(path.join(libdir, "jsctags"));
 
-var sys = require('sys');
+var sys = require('util');
 var _ = require('underscore')._;
 var getTags = require('../lib/cfa2/jscfa').getTags;
 var parse = require('../narcissus/lib/parser').parse;

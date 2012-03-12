@@ -44,7 +44,7 @@ var libdir = path.join(cwd, "..", "lib");
  
 require.paths.unshift(path.join(libdir, "jsctags"));
   
-var sys = require('sys');
+var sys = require('util');
 var _ = require('underscore')._;
 var http = require('http');
 var url = require('url');

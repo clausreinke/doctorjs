@@ -41,7 +41,7 @@ var path = require('path');
 
 var _ = require('underscore')._;
 var fs = require('fs');
-var sys = require('sys');
+var sys = require('util');
 var ctags = require('ctags');
 var getopt = require('getopt').getopt;
 var log = require('log');
